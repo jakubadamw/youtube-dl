@@ -15,6 +15,7 @@ from ..utils import (
     int_or_none,
     strip_or_none,
     unified_timestamp,
+    unescapeHTML,
 )
 
 
@@ -36,6 +37,25 @@ class PolskieRadioIE(InfoExtractor):
                 'timestamp': 1456594200,
                 'upload_date': '20160227',
                 'duration': 2364,
+                'thumbnail': r're:^https?://static\.prsa\.pl/images/.*\.jpg$'
+            },
+        }],
+    }, {
+        'url': 'https://www.polskieradio.pl/8/2382/Artykul/2534482,Zagarysci-Poezja-jak-spoiwo',
+        'info_dict': {
+            'id': '2534482',
+            'title': 'Żagaryści. Poezja jak spoiwo',
+            'description': 'md5:f18d95d5dcba747a09b635e21a4c0695',
+        },
+        'playlist': [{
+            'md5': 'd07559829f61d5a93a75755987ded760',
+            'info_dict': {
+                'id': '2516679',
+                'ext': 'mp3',
+                'title': 'md5:c6e1234e0b747ad883cb91b7ad06b98c',
+                'timestamp': 1592654400,
+                'upload_date': '20200620',
+                'duration': 1430,
                 'thumbnail': r're:^https?://static\.prsa\.pl/images/.*\.jpg$'
             },
         }],
@@ -78,7 +98,9 @@ class PolskieRadioIE(InfoExtractor):
 
         media_urls = set()
 
-        for data_media in re.findall(r'<[^>]+data-media=({[^>]+})', content):
+        for data_media in re.findall(r'<[^>]+data-media=("?{[^>]+}"?)', content):
+            if data_media.startswith("\""):
+                data_media = data_media = unescapeHTML(data_media[1:-1])
             media = self._parse_json(data_media, playlist_id, fatal=False)
             if not media.get('file') or not media.get('desc'):
                 continue
@@ -98,6 +120,7 @@ class PolskieRadioIE(InfoExtractor):
 
         title = self._og_search_title(webpage).strip()
         description = strip_or_none(self._og_search_description(webpage))
+        description = description.replace(u'\xa0', u' ') if description is not None else None
 
         return self.playlist_result(entries, playlist_id, title, description)
 
